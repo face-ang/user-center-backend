@@ -82,6 +82,11 @@ public class User implements Serializable {
     private String planetCode;
 
     /**
+     * 标签 json 表
+     */
+    private String tags;
+
+    /**
      * 用户角色
      */
     private Integer userRole;
