@@ -1,5 +1,7 @@
 package com.xjtu.usercenter.service;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 import com.xjtu.usercenter.model.domain.User;
 import org.junit.jupiter.api.Assertions;
@@ -76,5 +78,14 @@ public class UserServiceTest {
 
         long result = userService.userRegister(userAccount, userPassword, checkPassword, planetCode);
         Assertions.assertTrue(result > 0);
+    }
+    @Test
+    void userSearchUserByTags() {
+        List<String> list = Arrays.asList("java", "python");
+        List<User> users = userService.searchUserByTags(list);
+        for (User u : users) {
+            System.out.println(u.getTags());
+        }
+        System.out.println(users);
     }
 }

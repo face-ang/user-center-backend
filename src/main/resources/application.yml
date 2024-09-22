@@ -7,9 +7,15 @@ spring:
     url: jdbc:mysql://localhost:3306/wwyy
     username: root
     password: wy20001229
-  # session 失效时间
+  # session 失效时间（分钟）
   session:
     timeout: 86400
+    store-type: redis
+  # redis
+  redis:
+    port: 6379
+    host: localhost
+    database: 1
 server:
   port: 8080
   servlet:
@@ -23,3 +29,14 @@ mybatis-plus:
       logic-delete-field: idDelete # 全局逻辑删除字段名
       logic-delete-value: 1 # 逻辑已删除值
       logic-not-delete-value: 0 # 逻辑未删除值
+# 接口文档配置
+knife4j:
+  enable: true
+  openapi:
+    title: "UserCenter接口文档"
+    version: v1.0
+    group:
+      default:
+        api-rule: package
+        api-rule-resources:
+          - com.xjtu.usercenter.controller

@@ -26,6 +26,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.xjtu.usercenter.constant.UserConstant.ADMIN_ROLE;
 import static com.xjtu.usercenter.constant.UserConstant.USER_LOGIN_STATE;
 
 /**
@@ -162,6 +163,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         safetyUser.setUserStatus(originUser.getUserStatus());
         safetyUser.setUserRole(originUser.getUserRole());
         safetyUser.setCreateTime(originUser.getCreateTime());
+        safetyUser.setTags(originUser.getTags());
         return safetyUser;
     }
 
@@ -210,7 +212,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return userList.stream().filter(user -> {
             String userTags = user.getTags();
             Set<String> tagNameSet = gson.fromJson(userTags, new TypeToken<Set<String>>(){}.getType());
-            Optional.ofNullable(tagNameSet).orElse(new HashSet<>());
+            tagNameSet = Optional.ofNullable(tagNameSet).orElse(new HashSet<>());
             for (String tagName : tagNameList) {
                 if (!tagNameSet.contains(tagName)) {
                     return false;
@@ -218,6 +220,52 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             }
             return true;
         }).map(this::getSafetyUser).collect(Collectors.toList());
+    }
+
+    @Override
+    public int updateUser(User user, User loginUser) {
+        // 判断修改的用户id是否合法
+        long modifyId = user.getId();
+        if (modifyId <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 如果是管理员，可以修改任意用户
+        // 如果不是管理员。只允许更新自己的信息
+        if (!isAdmin(loginUser) && modifyId != loginUser.getId()) {
+            throw new BusinessException(ErrorCode.NO_AUTH);
+        }
+        // 判断要修改的用户是否在数据库中
+        User oldUser = userMapper.selectById(modifyId);
+        if (oldUser == null) {
+            throw new BusinessException(ErrorCode.NULL_ERROR);
+        }
+        // 修改
+        return userMapper.updateById(user);
+    }
+
+    @Override
+    public User getLoginUser(HttpServletRequest request) {
+        if (request == null) {
+            return null;
+        }
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        if (userObj == null) {
+            throw new BusinessException(ErrorCode.NO_AUTH);
+        }
+        return (User) userObj;
+    }
+
+    @Override
+    public boolean isAdmin(HttpServletRequest request)  {
+        // 鉴权
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        User user = (User) userObj;
+        return user != null && user.getUserRole() == ADMIN_ROLE;
+    }
+    @Override
+    public boolean isAdmin(User loginUser) {
+        // 鉴权
+        return loginUser != null && loginUser.getUserRole() == ADMIN_ROLE;
     }
 }
 
